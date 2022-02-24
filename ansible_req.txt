@@ -1,0 +1,9 @@
+sudo dnf -y install epel-release
+
+sudo dnf -y install ansible
+
+ansible-galaxy collection install community.mysql
+
+sudo yum -y install git
+
+git clone https://github.com/ShevchenkoIvan/otus_project.git
