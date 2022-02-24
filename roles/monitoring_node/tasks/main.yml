@@ -1,0 +1,48 @@
+---
+# tasks file for monitoring_node
+
+- name: Check installed Node Exporter
+  stat:
+    path: /usr/local/bin/node_exporter
+  register: exporter_stat
+
+- block: # If Node Exporter not installed
+      - name: Create user for Node Exporter
+        user:
+          name: nodeusr
+          create_home: no
+          shell: /bin/false
+
+      - name: Copy script for install
+        copy:
+          src: install_node_exporter.sh
+          dest: /tmp/install_node_exporter.sh
+          mode: '+x'
+
+      - name: Run script
+        shell:
+          cmd: /tmp/install_node_exporter.sh
+          chdir: /tmp
+
+      - name: Add service
+        copy:
+          src: node_exporter.service
+          dest: /etc/systemd/system/node_exporter.service
+        notify: systemd reload
+
+  when: exporter_stat.stat.exists == False
+
+- name: Start Node Exporter
+  systemd:
+    name: node_exporter
+    state: started
+    enabled: yes
+
+- name: Added Node Exporter port on firewall
+  firewalld:
+    port: 9100/tcp
+    permanent: true
+    state: enabled
+  notify: firewall restart
+
+

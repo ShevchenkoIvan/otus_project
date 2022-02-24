@@ -1,0 +1,16 @@
+---
+# handlers file for monitoring_server
+
+- name: systemd reload
+  systemd:
+    daemon_reload: yes
+
+- name: prometheus restart
+  systemd:
+    name: prometheus
+    state: restarted
+
+- name: firewall restart
+  systemd:
+    name: firewalld
+    state: restarted

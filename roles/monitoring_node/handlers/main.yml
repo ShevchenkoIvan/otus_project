@@ -1,0 +1,11 @@
+---
+# handlers file for monitoring_node
+
+- name: systemd reload
+  systemd:
+    daemon_reload: yes
+
+- name: firewall restart
+  systemd:
+    name: firewalld
+    state: restarted

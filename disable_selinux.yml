@@ -1,0 +1,31 @@
+---
+- name: Disable SELinux
+  hosts: "{{ hosts }}"
+  become: yes
+
+  tasks:
+
+  - block: # === For RedHat ===
+    - name: Change SELinux state disabled
+      selinux:
+        state: disabled
+      register: state_change
+
+    when: ansible_os_family == "RedHat"
+  - name: debug
+    debug:
+      var: state_change.changed
+
+
+
+  - block: # === Reboot if SELinux was changed ===
+    - name: Reboot after change SELinux
+      reboot:
+
+    - name: debug
+      debug:
+        var: state_change.changed
+
+
+    when: state_change.changed == true
+

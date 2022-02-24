@@ -1,0 +1,63 @@
+---
+# tasks file for docker
+
+- name: Remove podman
+  yum:
+    name:
+      - podman
+      - runc
+    state: absent
+
+- name: Install yum-utils
+  yum:
+    name: yum-utils
+    state: present
+
+- name: Added docker repo
+  shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo
+
+- name: Install docker and git
+  yum:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - git
+    state: present
+
+- name: Install docker-compose
+  get_url:
+    url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: '+x'
+
+- name: Clone portal repo
+  ansible.builtin.git:
+    repo: 'https://github.com/ShevchenkoIvan/otus-portal.git'
+    dest: /opt/docker
+
+- name: Enable docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Install Requirements for compose
+  yum:
+    name:
+      - python3
+      - python3-pip
+
+- name: Install Requirements for compose (pip)
+  pip:
+    name:
+      - docker
+      - pyYAML
+
+- name: deploy Docker Compose
+  docker_compose:
+    project_src: /opt/docker
+    files:
+      - docker-compose.yml

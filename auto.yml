@@ -1,0 +1,43 @@
+---
+- hosts: all_web
+  become: yes
+
+  roles:
+    - nginx
+
+- hosts: otus_back_web
+  become: yes
+
+  roles:
+    - docker
+
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+
+  roles:
+    - monitoring_server
+
+- hosts: all_web
+  become: yes
+
+  roles:
+    - monitoring_node
+
+- hosts: otus_back_web
+  become: yes
+
+  roles:
+    - def_db
+
+- hosts: otus-web-2
+  become: yes
+
+  roles:
+    - slave_db
+
+- hosts: otus-web-3
+  become: yes
+
+  roles:
+    - slave_db

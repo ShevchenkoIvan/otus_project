@@ -1,0 +1,29 @@
+---
+# tasks file for nginx
+
+- name: Install Nginx
+  yum:
+    name: nginx
+    state: present
+
+- name: Added http on firewall
+  firewalld:
+    port: 80/tcp
+    permanent: true
+    state: enabled
+  notify:
+    - firewall restart
+
+- name: Enable nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Copy conf file for Nginx
+  template:
+    src: otus_portal.conf.j2
+    dest: /etc/nginx/conf.d/otus_portal.conf
+  notify:
+    - Restart Nginx
+

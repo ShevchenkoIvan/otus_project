@@ -1,0 +1,42 @@
+{% if func == "back" %}
+server {
+    listen 80;
+    server_name 10.10.22.*;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+#    location /static/ {
+#        alias /var/www/automate/static;
+#   }
+#
+
+    location / {
+        proxy_redirect off;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://localhost:8000;
+    }
+}
+
+{% endif %}
+{% if func == "front" %}
+upstream back {
+    server 10.10.22.57:80;
+    server 10.10.22.58:80;
+    server 10.10.22.59:80;
+}
+
+
+server {
+    listen 80;
+    server_name 10.10.22.55;
+
+    location / {
+        proxy_pass http://back/ ;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+{% endif %}

@@ -1,0 +1,1 @@
+ mysqldump -u root -p 123qwe321 --all-databases --no-create-info > db_dump.sql

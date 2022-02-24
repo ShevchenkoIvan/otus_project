@@ -1,0 +1,12 @@
+---
+# handlers file for def_db
+
+- name: firewall restart
+  systemd:
+    name: firewalld
+    state: restarted
+
+- name: mysql restart
+  systemd:
+    name: mysqld
+    state: restarted

@@ -1,0 +1,108 @@
+---
+# tasks file for def_db
+
+- name: Install mysql
+  yum:
+    name: mysql-server
+    state: present
+
+- name: Install Requirements for mysql (pip)
+  pip:
+    name:
+      - PyMySQL
+
+- name: Added 3306 on firewall
+  firewalld:
+    port: 3306/tcp
+    permanent: true
+    state: enabled
+  notify:
+    - firewall restart
+
+- name: Start mysql
+  systemd:
+    name: mysqld
+    state: started
+    enabled: yes
+
+
+# mysql_secure_installation
+- name: Set mysql root password
+  mysql_user:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    login_host: 127.0.0.1
+    name: 'root'
+    host_all: true
+    password: '{{ db_root_pass }}'
+    state: present
+
+- name: Remove test database
+  mysql_db:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    name: test
+    state: absent
+
+- name: Remove anonymous users
+  mysql_user:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    name: ''
+    state: absent
+    host_all: true
+
+- name: Remove remote root login
+  mysql_user:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    name: 'root'
+    host_all: false
+
+- name: Create slave user
+  mysql_user:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    name: 'slave_user'
+    password: '{{ db_slave_pass }}'
+    priv: '*.*:REPLICATION SLAVE'
+    host: '%'
+    state: present
+
+- name: Create database user with name 'backup'
+  mysql_user:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    name: 'backup_user'
+    password: '{{ db_backup_pass }}'
+    priv: '*.*:SELECT,SHOW VIEW,LOCK TABLES,RELOAD,REPLICATION CLIENT,PROCESS'
+    state: present
+
+
+- name: Create new database
+  mysql_db:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    name: testdb
+    state: present
+
+- name: Copy conf file for mysql
+  template:
+    src: mysql-server.cnf.j2
+    dest: /etc/my.cnf.d/mysql-server.cnf
+  notify:
+    - mysql restart
+
+
+#- name: Add sample data to database
+#  copy:
+#   src: dump.sql
+#   dest: /tmp/dump.sql
+#
+#- name: Insert sample data into database
+#  mysql_db:
+#    login_user: 'root'
+#    login_password: '{{ db_root_pass }}'
+#    name: testdb
+#    state: import
+#    target: /tmp/dump.sql

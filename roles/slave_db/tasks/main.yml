@@ -1,0 +1,47 @@
+---
+# tasks file for slave_db
+
+- name: Get slave status
+  mysql_replication:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    mode: getslave
+  register: slave_state
+
+- name: Stop Slave
+  community.mysql.mysql_query:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    query: STOP SLAVE
+  when: slave_state.Is_Slave == true
+
+- name: Change primary
+  mysql_replication:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    mode: changemaster
+    master_host: 10.10.22.57
+    master_user: 'slave_user'
+    master_password: '{{ db_slave_pass }}'
+
+- name: Start Slave
+  community.mysql.mysql_query:
+    login_user: 'root'
+    login_password: '{{ db_root_pass }}'
+    query: START SLAVE
+
+- name: Copy script for backup
+  copy:
+    src: mysql_backup_script.sh
+    dest: /usr/local/bin/mysql_backup_script.sh
+    mode: '+x'
+
+- name: Add cron script backup
+  cron:
+    name: MySQL Backup
+    cron_file: mysql_backup_script
+    user: root
+    job: /usr/local/bin/mysql_backup_script.sh
+    state: present
+    hour: '2'
+    minute: '20'

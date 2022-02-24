@@ -1,0 +1,72 @@
+---
+# tasks file for monitoring_server
+
+- name: Check installed Prometheus
+  stat:
+    path: /usr/local/bin/prometheus
+  register: prometheus_stat
+
+
+- block: # If Prometheus not installed
+      - name: Create user for Prometheus
+        user:
+          name: prometheus
+          create_home: no
+          shell: /bin/false
+
+      - name: Copy script for install
+        copy:
+          src: install_prometheus.sh
+          dest: /tmp/install_prometheus.sh
+          mode: '+x'
+
+      - name: Run script
+        shell:
+          cmd: /tmp/install_prometheus.sh
+          chdir: /tmp
+
+      - name: Add service
+        copy:
+          src: prometheus.service
+          dest: /etc/systemd/system/prometheus.service
+        notify: systemd reload
+
+  when: prometheus_stat.stat.exists == False
+
+- name: Start Prometheus
+  systemd:
+    name: prometheus
+    state: started
+    enabled: yes
+
+- name: Copy config for Prometheus
+  copy:
+    src: prometheus.yml
+    dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+  notify: prometheus restart
+
+
+- name: Add Grafana repo
+  copy:
+    src: grafana.repo
+    dest: /etc/yum.repos.d/grafana.repo
+
+- name: Install Grafana
+  yum:
+    name: grafana
+    state: present
+
+- name: Run Grafana
+  systemd:
+    name: grafana-server
+    state: started
+    enabled: yes
+
+- name: Added Grafana port on firewall
+  firewalld:
+    port: 3000/tcp
+    permanent: true
+    state: enabled
+  notify: firewall restart
