@@ -53,6 +53,7 @@
 - name: Install Requirements for compose (pip)
   pip:
     name:
+      - docker-compose
       - docker
       - pyYAML
 

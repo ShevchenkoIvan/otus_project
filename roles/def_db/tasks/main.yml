@@ -30,7 +30,6 @@
 - name: Set mysql root password
   mysql_user:
     login_user: 'root'
-    login_password: '{{ db_root_pass }}'
     login_host: 127.0.0.1
     name: 'root'
     host_all: true
